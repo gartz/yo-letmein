@@ -1,6 +1,6 @@
 var express = require('express');
 var Yo = require('yo-api');
-var security = require('./security.json');
+var security = require('./users.json');
 
 var app = express();
 

@@ -1,7 +1,7 @@
 {
-  "name": "ryip",
-  "version": "0.0.0",
-  "description": "A Raspiberry Pi Yo comunicator to control Intercom Pad",
+  "name": "yo-letmein",
+  "version": "0.0.1",
+  "description": "A home project to be used with Raspberry PI, that starts a server to allow YO trigger the GPIO to do stuffs like open doors",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

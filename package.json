@@ -9,6 +9,10 @@
   },
   "author": "Gabriel Reitz Giannattasio <gabriel@gartz.com.br>",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/gartz/yo-letmein.git"
+  },
   "dependencies": {
     "express": "^4.8.6",
     "forever-monitor": "^1.3.0",

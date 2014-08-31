@@ -28,7 +28,7 @@ http://projects.privateeyepi.com/home/on-off-project
 Starting the server
 -------------------
 
-After run `npm install` you can start the server using `node index.js`
+After run `npm install` you can start the server using `npm start`
 
 Options:
 * listen - A port or socket

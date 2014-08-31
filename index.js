@@ -25,7 +25,7 @@ if (isHttpsOff) {
     var certificate = fs.readFileSync(argv.crt, 'utf8');
 }
 
-var redirectAddress = 'tmp.sock';
+var redirectAddress = 'redirect.sock';
 
 var express = require('express');
 var Yo = require('yo-api');
@@ -87,13 +87,12 @@ if (!isHttpsOff) {
         key: privateKey,
         cert: certificate
     }, app).listen(httpsAddress, serverCallback);
-    console.log(!insecure);
     if (!insecure) {
         console.log('Starting security enforciment');
         http.createServer(function (req, res){
             var host = req.headers.host;
             res.writeHead(301, { "Location": "https://" + host + req.url });
             res.end();
-        }).listen(redirectAddress);
+        }).listen(redirectAddress, serverCallback);
     }
 }

@@ -4,6 +4,7 @@
   "description": "A home project to be used with Raspberry PI, that starts a server to allow YO trigger the GPIO to do stuffs like open doors",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Gabriel Reitz Giannattasio <gabriel@gartz.com.br>",

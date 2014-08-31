@@ -1,0 +1,8 @@
+#!/bin/sh
+
+CMD="$0"
+WORK_DIR=$PWD
+CMD_DIR=`dirname "$CMD"`
+cd "$CMD_DIR/.."
+
+node src/index.js "$@"

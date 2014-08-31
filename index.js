@@ -1,18 +1,23 @@
 var fs = require('fs');
-var express = require('express');
+var net = require('net');
 var http = require('http');
 var https = require('https');
+
+var port = 8880;
+var httpAddress = './http.sock';
+var httpsAddress = './https.sock';
 var privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
 var certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
 
+var express = require('express');
 var Yo = require('yo-api');
-var security = require('./users.json');
+var users = require('./users.json');
 
 var app = express();
 
 app.get('/', function(req, res){
     var user = req.query.username ? req.query.username.toUpperCase() : '';
-    if (!security[user]) {
+    if (!users[user]) {
         console.log('Security fail for: %s', user);
         res.send('error');
         return;
@@ -32,8 +37,28 @@ app.get('/', function(req, res){
 });
 
 function serverCallback() {
-    console.log('Listening on port %d', this.address().port);
+    var addr = this.address();
+    console.log('Listening on %s', addr.port ? addr.port : fs.realpathSync(addr));
 }
 
-http.createServer(app).listen(8880, serverCallback);
-https.createServer({key: privateKey, cert: certificate}, app).listen(8883, serverCallback);
+[port, httpAddress, httpsAddress].forEach(function (addr){
+    if(!fs.existsSync(addr)) return;
+    fs.unlinkSync(addr);
+});
+
+net.createServer(function (conn){
+    conn.once('data', function (buf) {
+        // A TLS handshake record starts with byte 22.
+        var address = (buf[0] === 22) ? httpsAddress : httpAddress;
+        var proxy = net.createConnection(address, function () {
+            proxy.write(buf);
+            conn.pipe(proxy).pipe(conn);
+        });
+    });
+}).listen(port, serverCallback);
+
+http.createServer(app).listen(httpAddress, serverCallback);
+https.createServer({
+    key: privateKey,
+    cert: certificate
+}, app).listen(httpsAddress, serverCallback);

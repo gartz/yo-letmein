@@ -1,4 +1,4 @@
-var packagejson = require('./package.json');
+var packagejson = require('../package.json');
 
 if (process.env.NODE_ENV !== 'production'){
     require('longjohn');

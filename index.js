@@ -1,4 +1,10 @@
+var fs = require('fs');
 var express = require('express');
+var http = require('http');
+var https = require('https');
+var privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
+var certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+
 var Yo = require('yo-api');
 var security = require('./users.json');
 
@@ -8,6 +14,7 @@ app.get('/', function(req, res){
     var user = req.query.username ? req.query.username.toUpperCase() : '';
     if (!security[user]) {
         console.log('Security fail for: %s', user);
+        res.send('error');
         return;
     }
     console.log('Opening the door for: %s', user);
@@ -24,6 +31,9 @@ app.get('/', function(req, res){
     res.send('yo brow');
 });
 
-var server = app.listen(8880, function() {
-    console.log('Listening on port %d', server.address().port);
-});
+function serverCallback() {
+    console.log('Listening on port %d', this.address().port);
+}
+
+http.createServer(app).listen(8880, serverCallback);
+https.createServer({key: privateKey, cert: certificate}, app).listen(8883, serverCallback);

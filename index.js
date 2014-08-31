@@ -3,11 +3,29 @@ var net = require('net');
 var http = require('http');
 var https = require('https');
 
-var port = 8880;
-var httpAddress = './http.sock';
-var httpsAddress = './https.sock';
-var privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
-var certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+var argv = require('yargs')
+    .default('listen', 8880)
+    .default('http', './http.sock')
+    .default('https', './https.sock')
+    .default('key', 'sslcert/server.key')
+    .default('crt', 'sslcert/server.crt')
+    .boolean('insecure')
+    .boolean('httpsOff')
+    .argv;
+
+var listen = argv.listen;
+var httpAddress = argv.http;
+var isHttpsOff = argv.httpsOff;
+var insecure = argv.insecure;
+if (isHttpsOff) {
+    insecure = true;
+} else {
+    var httpsAddress = argv.https;
+    var privateKey  = fs.readFileSync(argv.key, 'utf8');
+    var certificate = fs.readFileSync(argv.crt, 'utf8');
+}
+
+var redirectAddress = 'tmp.sock';
 
 var express = require('express');
 var Yo = require('yo-api');
@@ -41,24 +59,41 @@ function serverCallback() {
     console.log('Listening on %s', addr.port ? addr.port : fs.realpathSync(addr));
 }
 
-[port, httpAddress, httpsAddress].forEach(function (addr){
+[listen, httpAddress, httpsAddress, redirectAddress].forEach(function (addr){
     if(!fs.existsSync(addr)) return;
     fs.unlinkSync(addr);
 });
 
 net.createServer(function (conn){
     conn.once('data', function (buf) {
+
+        // Enforce HTTPS
+        var destineAddress = insecure ? httpAddress : redirectAddress;
+
         // A TLS handshake record starts with byte 22.
-        var address = (buf[0] === 22) ? httpsAddress : httpAddress;
+        var address = (buf[0] === 22) ? httpsAddress : destineAddress;
+        if (isHttpsOff) address = httpAddress;
         var proxy = net.createConnection(address, function () {
             proxy.write(buf);
             conn.pipe(proxy).pipe(conn);
         });
     });
-}).listen(port, serverCallback);
+}).listen(listen, serverCallback);
 
 http.createServer(app).listen(httpAddress, serverCallback);
-https.createServer({
-    key: privateKey,
-    cert: certificate
-}, app).listen(httpsAddress, serverCallback);
+if (!isHttpsOff) {
+    console.log('Starting HTTPS support');
+    https.createServer({
+        key: privateKey,
+        cert: certificate
+    }, app).listen(httpsAddress, serverCallback);
+    console.log(!insecure);
+    if (!insecure) {
+        console.log('Starting security enforciment');
+        http.createServer(function (req, res){
+            var host = req.headers.host;
+            res.writeHead(301, { "Location": "https://" + host + req.url });
+            res.end();
+        }).listen(redirectAddress);
+    }
+}

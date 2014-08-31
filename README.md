@@ -3,6 +3,7 @@ yo-letmein
 
 A home project to be used with Raspberry PI, that starts a server to allow YO trigger the GPIO to do stuffs like open doors
 
+
 What you need
 -------------
 
@@ -23,3 +24,25 @@ The Relay Circuit
 
 http://projects.privateeyepi.com/home/on-off-project
 
+
+Starting the server
+-------------------
+
+After run `npm install` you can start the server using `node index.js`
+
+Options:
+* listen - A port or socket
+* http - A port or socket for HTTP
+* https - A port or socket for HTTPS
+* key - Key file required for HTTPS
+* crt - Certificate file required for HTTPS
+* insecure - Allows using http and https in the listen host, default is disabled and will redirect HTTP to HTTPS
+* httpsOff - Disable the HTTPS and force insecure
+
+
+TODO
+----
+
+* Remove the redirect soket, it not need to be exposed at all
+* Add a help param
+* Add URL whitelist

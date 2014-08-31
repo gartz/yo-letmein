@@ -1,4 +1,9 @@
 var packagejson = require('./package.json');
+
+if (process.env.NODE_ENV !== 'production'){
+    require('longjohn');
+}
+
 var fs = require('fs');
 var net = require('net');
 var http = require('http');
@@ -39,8 +44,6 @@ if (isHttpsOff) {
     var certificate = fs.readFileSync(argv.crt, 'utf8');
 }
 
-var redirectAddress = 'redirect.sock';
-
 var express = require('express');
 var Yo = require('yo-api');
 var users = require('./users.json');
@@ -70,22 +73,29 @@ app.get('/', function(req, res){
 
 function serverCallback() {
     var addr = this.address();
-    console.log('Listening on %s', addr.port ? addr.port : fs.realpathSync(addr));
+    var text = '';
+    if (addr.port){
+        text = [
+            addr.address,
+            ':',
+            addr.port,
+            ' [' + addr.family + ']'
+        ].join('');
+    } else {
+        text = fs.realpathSync(addr);
+    }
+    console.log('Listening on %s', text);
 }
 
-[listen, httpAddress, httpsAddress, redirectAddress].forEach(function (addr){
-    if(!fs.existsSync(addr)) return;
+[listen, httpAddress, httpsAddress].forEach(function (addr){
+    if (!fs.existsSync(addr)) return;
     fs.unlinkSync(addr);
 });
 
 net.createServer(function (conn){
     conn.once('data', function (buf) {
-
-        // Enforce HTTPS
-        var destineAddress = insecure ? httpAddress : redirectAddress;
-
         // A TLS handshake record starts with byte 22.
-        var address = (buf[0] === 22) ? httpsAddress : destineAddress;
+        var address = (buf[0] === 22) ? httpsAddress : httpAddress;
         if (isHttpsOff) address = httpAddress;
         var proxy = net.createConnection(address, function () {
             proxy.write(buf);
@@ -94,19 +104,24 @@ net.createServer(function (conn){
     });
 }).listen(listen, serverCallback);
 
-http.createServer(app).listen(httpAddress, serverCallback);
+var redirectApp = function (req, res){
+    var host = req.headers.host;
+    res.writeHead(301, { "Location": "https://" + host + req.url });
+    res.end();
+};
+
+var httpApp = app;
+if (!insecure){
+    console.log('Secure mode enable, HTTP redirecting to HTTPS');
+    httpApp = redirectApp;
+}
+
+console.log('Starting HTTP support');
+http.createServer(httpApp).listen(httpAddress, serverCallback);
 if (!isHttpsOff) {
     console.log('Starting HTTPS support');
     https.createServer({
         key: privateKey,
         cert: certificate
     }, app).listen(httpsAddress, serverCallback);
-    if (!insecure) {
-        console.log('Starting security enforciment');
-        http.createServer(function (req, res){
-            var host = req.headers.host;
-            res.writeHead(301, { "Location": "https://" + host + req.url });
-            res.end();
-        }).listen(redirectAddress, serverCallback);
-    }
 }

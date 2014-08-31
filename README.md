@@ -43,6 +43,5 @@ Options:
 TODO
 ----
 
-* Remove the redirect soket, it not need to be exposed at all
 * Add a help param
 * Add URL whitelist

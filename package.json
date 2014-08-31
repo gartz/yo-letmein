@@ -1,6 +1,6 @@
 {
   "name": "yo-letmein",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A home project to be used with Raspberry PI, that starts a server to allow YO trigger the GPIO to do stuffs like open doors",
   "main": "index.js",
   "scripts": {

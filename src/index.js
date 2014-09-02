@@ -18,14 +18,21 @@ requirejs.config({
     nodeRequire: require
 });
 
-requirejs(['server', 'promises/users'], function (server, users){
+requirejs(['server', 'promises/users', 'argv'], function (server, users, argv){
+    var insecure = argv.insecure;
+
     server.get('/', function(req, res){
         users().catch(function (){
             res.send('Internal error');
         }).then(function (usersList) {
             var user = req.query.username ? req.query.username.toUpperCase() : '';
             if (!usersList){
-                console.log('No users white list. User [%s] granted', user);
+                if (!insecure){
+                    console.error('Security failure, invalid users.json file');
+                    res.send('error');
+                    return;
+                }
+                console.warn('No users white list. User [%s] granted', user);
             } else if (!usersList[user]) {
                 console.log('Security fail for: %s', user);
                 res.send('error');

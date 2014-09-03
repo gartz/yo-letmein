@@ -23,7 +23,7 @@ define(function(require) {
     var argv = yargs.argv;
     if (argv.help) {
         console.log(yargs.help());
-        return;
+        process.exit();
     }
 
     return argv;

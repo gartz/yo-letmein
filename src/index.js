@@ -18,10 +18,23 @@ requirejs.config({
     nodeRequire: require
 });
 
-requirejs(['server', 'promises/users', 'argv'], function (server, users, argv){
+requirejs([
+    'server',
+    'promises/users',
+    'argv',
+    'request'
+], function (
+    server,
+    users,
+    argv,
+    request
+){
+    'use strict';
     var insecure = argv.insecure;
 
     server.get('/', function(req, res){
+        console.log(req.ips);
+
         users().catch(function (){
             res.send('Internal error');
         }).then(function (usersList) {
@@ -39,16 +52,11 @@ requirejs(['server', 'promises/users', 'argv'], function (server, users, argv){
                 return;
             }
             console.log('Opening the door for: %s', user);
-            try {
-                var gpio = require("pi-gpio");
-                gpio.open(12, "output", function(err) {     // Open pin 12 for output
-                    gpio.write(12, 1, function() {          // Set pin 12 high (1)
-                        setTimeout(gpio.close.bind(gpio, 16), 6e3);
-                    });
-                });
-            } catch(e) {
-                console.warn('GPIO FAIL');
-            }
+            request('http://192.168.1.8/?pin=OFF1', function () {
+                setTimeout(function(){
+                    request('http://192.168.1.8/?pin=ON1', function () {});
+                }, 6e3);
+            });
             res.send('yo brow');
         });
     });
